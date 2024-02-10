@@ -2,17 +2,16 @@ package com.javagame;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
-import javafx.scene.Scene;
 
 final public class JavaGame extends Application {
     @Override public void start(Stage stage) {
         stage.setTitle("Java game!");
 
-        GameLoop gameLoop = new GameLoop();
+        GameLoop gameLoop = new GameLoop(stage, 1280, 720);
         stage.setScene(gameLoop.getScene());
-        gameLoop.start();
-
         stage.show();
+        
+        gameLoop.start();
     }
     public static void main(String[] args) {
         launch();
