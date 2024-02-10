@@ -82,6 +82,12 @@ final public class Input {
     public Point2D getMousePos() {
         return new Point2D(m_mousePos.getX(), m_mousePos.getY());
     }
+    public double getMousePosX() {
+        return m_mousePos.getX();
+    }
+    public double getMousePosY() {
+        return m_mousePos.getY();
+    }
 
     private class KeyState {
         boolean pressed = false;

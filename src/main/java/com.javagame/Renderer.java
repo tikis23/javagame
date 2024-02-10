@@ -8,6 +8,7 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.canvas.*;
 import javafx.geometry.Point2D;
+import java.nio.file.Paths;
 
 final public class Renderer {
     public Renderer(Group group, int width, int height) {
@@ -25,7 +26,7 @@ final public class Renderer {
         m_textures = new byte[2][m_textureSize*m_textureSize*3];
         byte[] temp_buff = new byte[m_textureSize*m_textureSize*4];
         for (int t = 0; t < m_textures.length; t++) {
-            Image img = new Image("textures/" + (t + 1) + ".jpg");
+            Image img = new Image("file:" + Paths.get("textures/" + (t + 1) + ".jpg").toString());
             img.getPixelReader().getPixels(0, 0, m_textureSize, m_textureSize,
                         WritablePixelFormat.getByteBgraInstance(), temp_buff, 0, m_textureSize*4);
             // copy rgb only and rotate

@@ -43,6 +43,12 @@ final public class Player {
     public Point2D getDir() {
         return new Point2D(m_dir.getX(), m_dir.getY());
     }
+    public void setPos(double x, double y) {
+        m_body.setPosition(new Point2D(x, y));
+    }
+    public void setDir(double x, double y) {
+        m_dir = new Point2D(x, y).normalize();
+    }
     public RigidBody getRigidBody() {
         return m_body;
     }
