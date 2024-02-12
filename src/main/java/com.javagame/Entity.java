@@ -3,13 +3,16 @@ package com.javagame;
 import javafx.geometry.Point2D;
 
 public abstract class Entity {
-    public Entity(Sprite sprite, double height, Point2D position, double maxSpeed, double radius, double velocityDamp) {
+    public Entity(Sprite sprite, int maxHealth, int damage, double height, Point2D position, double maxSpeed, double radius, double velocityDamp) {
         m_body = new RigidBody(position, maxSpeed, radius, velocityDamp);
         m_sprite = sprite;
         m_height = height;
         m_destroy = false;
         m_vOffset = 0;
         m_animTileId = 0;
+        m_maxHealth = maxHealth;
+        m_health = m_maxHealth;
+        m_damage = damage;
     }
     public RigidBody getRigidBody() {
         return m_body;
@@ -38,9 +41,26 @@ public abstract class Entity {
     public void setAnimTileId(int animTileId) {
         m_animTileId = animTileId;
     }
+    public void setHealth(int health) {
+        m_health = Math.min(m_maxHealth, Math.max(0, health));
+    }
+    public int getHealth() {
+        return m_health;
+    }
+    public void setDamage(int damage) {
+        m_damage = damage;
+    }
+    public int getDamage() {
+        return m_damage;
+    }
+ 
     public abstract void update(Input input, double dt, World world);
     public abstract void onCollideWall();
     public abstract void onCollideEntity(Entity ent);
+
+    private int m_maxHealth;
+    private int m_health;
+    private int m_damage;
 
     private int m_animTileId;
     private double m_vOffset;

@@ -5,10 +5,10 @@ import java.util.EnumSet;
 
 final public class Bullet extends Entity {
     public Bullet(Sprite sprite, Point2D position, double maxSpeed, double radius, double velocityDamp) {
-        super(sprite, radius * 2, position, maxSpeed, radius, velocityDamp);
+        super(sprite, 0, 400, radius * 2, position, maxSpeed, radius, velocityDamp);
         m_hit = false;
-        m_animFly = new Animation(0, 2, 1, 7, true);
-        m_animDie = new Animation(0, 8, 3, 7, false);
+        m_animFly = new Animation(0, 2, 1, 7, true, 1);
+        m_animDie = new Animation(0, 8, 3, 7, false, 1);
         getRigidBody().setCollisionType(Physics.CollideMask.BULLET);
         getRigidBody().collisionFlags = EnumSet.of(
             Physics.CollideMask.WALL, Physics.CollideMask.ENEMY);
@@ -33,8 +33,7 @@ final public class Bullet extends Entity {
     @Override public void onCollideEntity(Entity ent) {
         m_hit = true;
         getRigidBody().setVelocity(new Point2D(0, 0));
-        //getRigidBody().collisionFlags = EnumSet.noneOf(Physics.CollideMask.class);
-        System.out.println("Bullet collided with someone!");
+        getRigidBody().collisionFlags = EnumSet.noneOf(Physics.CollideMask.class);
     }
 
     private boolean m_hit;

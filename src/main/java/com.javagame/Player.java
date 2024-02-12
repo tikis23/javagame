@@ -5,14 +5,13 @@ import java.util.EnumSet;
 
 final public class Player extends Entity {
     public Player(double x, double y) {
-        super(null, 0, new Point2D(x, y), 0.05, 0.2, 0.2);
+        super(null, 1000, 0, 0, new Point2D(x, y), 0.05, 0.2, 0.2);
         m_speed = 0.002;
         m_sensitivity = 0.05;
         m_dir = new Point2D(1, 0).normalize();
         getRigidBody().setCollisionType(Physics.CollideMask.PLAYER);
         getRigidBody().collisionFlags = EnumSet.of(
             Physics.CollideMask.WALL, Physics.CollideMask.ENEMY);
-
     }
 
     @Override public void update(Input input, double dt, World world) {
@@ -67,6 +66,7 @@ final public class Player extends Entity {
 
     @Override public void onCollideWall() {}
     @Override public void onCollideEntity(Entity ent) {
+        setHealth(getHealth() - ent.getDamage());
     }
     
     private Point2D m_dir;

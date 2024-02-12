@@ -55,6 +55,18 @@ final public class World {
         }
         m_addEntityQueue.clear();
 
+        // check if all enemies are dead
+        boolean enemiesLeft = false;
+        for (Entity ent : m_entities) {
+            if (ent.getRigidBody().getCollisionType() == Physics.CollideMask.ENEMY) {
+                enemiesLeft = true;
+                break;
+            }
+        }
+        if (!enemiesLeft) {
+            m_complete = true;
+        }
+
         if (m_complete) {
             // if player is close to any exit, start opening
             for (int i = 0; i < m_exits.length; i++) {

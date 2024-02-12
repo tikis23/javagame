@@ -69,7 +69,6 @@ final public class Physics {
             for (Entity other : m_entitites.values()) {
                 RigidBody otherBody = other.getRigidBody();
                 if (body.collisionFlags.contains(otherBody.getCollisionType()) && otherBody.collisionFlags.contains(body.getCollisionType())) {
-                    // TODO: calculate distance manually to avoid sqrt
                     double bodyDist = pos.add(vel).distance(otherBody.getPosition());
                     double minDist = r + otherBody.getCollisionRadius();
                     if (bodyDist < minDist) {
@@ -78,9 +77,10 @@ final public class Physics {
                         if (otherSet != null && !otherSet.contains(ent)) {
                             collidedWith.add(other);
                         }
-                        double diff = minDist - bodyDist;
-                        // TODO: make collision smooth
-                        vel = vel.normalize().multiply(vel.magnitude() - diff);
+                        // adjust velocity
+                        Point2D offsetDir = pos.add(vel).subtract(otherBody.getPosition()).normalize();
+                        offsetDir = offsetDir.multiply(minDist - bodyDist);
+                        vel = vel.add(offsetDir);
                     }
                 }
             }
