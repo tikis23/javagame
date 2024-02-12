@@ -1,6 +1,7 @@
 package com.javagame;
 
 import javafx.geometry.Point2D;
+import java.util.EnumSet;
 
 final public class RigidBody {
     public RigidBody(Point2D position, double maxSpeed, double radius, double velocityDamp) {
@@ -11,6 +12,7 @@ final public class RigidBody {
         m_id = m_idCounter;
         m_idCounter++;
         m_damp = velocityDamp;
+        collisionFlags = EnumSet.noneOf(Physics.CollideMask.class);
     }
     public int getId() {
         return m_id;
@@ -40,7 +42,19 @@ final public class RigidBody {
     public double getDamp() {
         return m_damp;
     }
+    public double getRadius() {
+        return m_collisionRadius;
+    }
+    public Physics.CollideMask getCollisionType() {
+        return m_collisionType;
+    }
+    public void setCollisionType(Physics.CollideMask type) {
+        m_collisionType = type;
+    }
+    
+    public EnumSet<Physics.CollideMask> collisionFlags;
 
+    private Physics.CollideMask m_collisionType;
     private double m_damp;
     private double m_maxSpeed;
     private Point2D m_position;

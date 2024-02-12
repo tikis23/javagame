@@ -1,15 +1,21 @@
 package com.javagame;
 
 import javafx.geometry.Point2D;
+import java.util.EnumSet;
 
-final public class Player {
+final public class Player extends Entity {
     public Player(double x, double y) {
+        super(null, 0, new Point2D(x, y), 0.05, 0.2, 0.2);
         m_speed = 0.002;
         m_sensitivity = 0.05;
         m_dir = new Point2D(1, 0).normalize();
-        m_body = new RigidBody(new Point2D(x, y), 0.05, 0.2, 0.2);
+        getRigidBody().setCollisionType(Physics.CollideMask.PLAYER);
+        getRigidBody().collisionFlags = EnumSet.of(
+            Physics.CollideMask.WALL, Physics.CollideMask.ENEMY);
+
     }
-    void update(Input input, double dt) {
+
+    @Override public void update(Input input, double dt, World world) {
         // direction
         Point2D mousePos = input.getMousePos();
         if (m_mouseOld == null) {
@@ -34,28 +40,36 @@ final public class Player {
         if (input.isHeld("SHIFT")) multiplier = 3;
 
         if (offset.magnitude() > 0) {
-            m_body.addVelocity(offset.normalize().multiply(m_speed * multiplier * dt));
+            getRigidBody().addVelocity(offset.normalize().multiply(m_speed * multiplier * dt));
+        }
+
+        // shooting
+        if (input.isPressed("MOUSE_PRIMARY")) {
+            Sprite bulletSprite = Sprite.get("plasma.png", 99);
+            Bullet bullet = new Bullet(bulletSprite, getPos().add(getDir().multiply(0.5)), 10, 0.1, 1);
+            bullet.getRigidBody().setVelocity(m_dir.multiply(0.05));
+            bullet.setVOffset(0.3);
+            world.addEntity(bullet, true);
         }
     }
     public Point2D getPos() {
-        return m_body.getPosition();
+        return getRigidBody().getPosition();
     }
     public Point2D getDir() {
         return new Point2D(m_dir.getX(), m_dir.getY());
     }
     public void setPos(double x, double y) {
-        m_body.setPosition(new Point2D(x, y));
+        getRigidBody().setPosition(new Point2D(x, y));
     }
     public void setDir(double x, double y) {
         m_dir = new Point2D(x, y).normalize();
     }
-    public RigidBody getRigidBody() {
-        return m_body;
-    }
 
+    @Override public void onCollideWall() {}
+    @Override public void onCollideEntity(Entity ent) {
+    }
     
     private Point2D m_dir;
-    private RigidBody m_body;
     private double m_sensitivity;
     private double m_speed;
     private Point2D m_mouseOld;

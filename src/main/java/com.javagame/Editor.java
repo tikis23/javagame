@@ -3,6 +3,7 @@ package com.javagame;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Background;
@@ -19,6 +20,10 @@ import javafx.util.converter.IntegerStringConverter;
 import java.util.function.UnaryOperator;
 import java.nio.file.Paths;
 import javafx.geometry.Point2D;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.ScrollEvent;
 
 final public class Editor {
     public Editor(int windowWidth, int windowHeight) {
@@ -27,9 +32,12 @@ final public class Editor {
         m_exit = false;
         m_cameraX = 0;
         m_cameraY = 0;
-        m_selectedImage = 0;
+        m_selectedImage = -1;
         m_map = new WorldMap(null);
         m_setPlayer = false;
+        m_addExits = false;
+        m_removeExits = false;
+        Background background = new Background(new BackgroundFill(Color.rgb(20, 20, 20, 1.0), null, null));
 
         // setup canvas
         m_canvas = new Canvas(m_width, m_height);
@@ -37,24 +45,9 @@ final public class Editor {
 
         // setup buttons
         TextField newFileName = createTextField();
+        newFileName.setPromptText("Map name");
         Button saveButton = createButton("Save");
-        saveButton.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                String name = newFileName.getText();
-                if (name != null && !name.isEmpty()) {
-                    m_map.saveToFile(name);
-                }
-            }
-        });
         Button loadButton = createButton("Load");
-        loadButton.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                String name = newFileName.getText();
-                if (name != null && !name.isEmpty()) {
-                    m_map.loadFromFile(name);
-                }
-            }
-        });
         Button exitButton = createButton("Exit");
         exitButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
@@ -62,12 +55,7 @@ final public class Editor {
             }
         });
         Button newButton = createButton("New");
-        newButton.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent event) {
-                newFileName.setText("");
-                m_map = new WorldMap(null);
-            }
-        });
+
         // resize input
         UnaryOperator<TextFormatter.Change> integerFilter = change -> {
             String newText = change.getControlNewText();
@@ -79,9 +67,11 @@ final public class Editor {
         TextField mapSizeX = createTextField();
         mapSizeX.setTextFormatter(new TextFormatter<>(new IntegerStringConverter(), null, integerFilter));
         mapSizeX.setText(String.valueOf(m_map.getMapWidth()));
+        mapSizeX.setPromptText("Map width");
         TextField mapSizeY = createTextField();
         mapSizeY.setTextFormatter(new TextFormatter<>(new IntegerStringConverter(), null, integerFilter));
         mapSizeY.setText(String.valueOf(m_map.getMapHeight()));
+        mapSizeY.setPromptText("Map height");
 
         Button resizeButton = createButton("Resize");
         resizeButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -100,35 +90,140 @@ final public class Editor {
                 m_setPlayer = true;
             }
         });
- 
-        VBox buttons = new VBox(20);
-        buttons.setPadding(new Insets(10));
-        buttons.getChildren().addAll(newFileName, saveButton, loadButton, exitButton, newButton,
-                mapSizeX, mapSizeY, resizeButton, setPlayer);
+        TextField mapTarget = createTextField();
+        mapTarget.setPromptText("Target map");
+
+        saveButton.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent event) {
+                String target = mapTarget.getText();
+                if (target != null) {
+                    m_map.setTargetMap(target);
+                }
+                String name = newFileName.getText();
+                if (name != null && !name.isEmpty()) {
+                    m_map.saveToFile(name);
+                }
+            }
+        });
+        loadButton.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent event) {
+                String name = newFileName.getText();
+                if (name != null && !name.isEmpty()) {
+                    m_map.loadFromFile(name);
+                    mapSizeX.setText(String.valueOf(m_map.getMapWidth()));
+                    mapSizeY.setText(String.valueOf(m_map.getMapHeight()));
+                    mapTarget.setText(m_map.getTargetMap());
+                }
+            }
+        });
+        newButton.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent event) {
+                newFileName.setText("");
+                m_map = new WorldMap(null);
+                mapSizeX.setText(String.valueOf(m_map.getMapWidth()));
+                mapSizeY.setText(String.valueOf(m_map.getMapHeight()));
+                mapTarget.setText(m_map.getTargetMap());
+            }
+        });
+
+        Button addExits = createButton("Add exits");
+        addExits.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent event) {
+                m_removeExits = false;
+                m_addExits = true;
+            }
+        });
+        Button removeExits = createButton("Remove exits");
+        removeExits.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent event) {
+                m_addExits = false;
+                m_removeExits = true;
+            }
+        });
+
+        VBox buttonBox = new VBox(20);
+        buttonBox.setPadding(new Insets(0, 5, 0, 0));
+        buttonBox.getChildren().addAll(newFileName, saveButton, loadButton, exitButton, newButton,
+                mapSizeX, mapSizeY, resizeButton, setPlayer, mapTarget, addExits, removeExits);
+        m_buttons = new ScrollPane();
+        String cssButtons = ".scroll-bar:vertical .thumb {-fx-background-color: rgb(40, 40, 40);}" + 
+            ".scroll-bar:vertical .track {-fx-background-color: rgb(10, 10, 10);}" +
+            ".scroll-bar:vertical .increment-button, .decrement-button {-fx-background-color :transparent;"+
+            "-fx-background-radius : 0.0; -fx-padding :0.0 5.0 0.0 0.0;}" +
+            ".scroll-bar:vertical .increment-arrow, .decrement-arrow {-fx-shape : \" \"; -fx-padding :0.0 0.15em;}";
+        m_buttons.getStylesheets().add("data:text/css," + cssButtons);
+        m_buttons.setHmax(0.0);
+        m_buttons.setBackground(background);
+        m_buttons.setMaxHeight(m_height);
+        m_buttons.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        m_buttons.setContent(buttonBox);
+        m_buttons.setBackground(background);     
+        m_buttons.setPadding(new Insets(10));
+        buttonBox.setBackground(background);     
 
         // images
+        ScrollPane imagePane = new ScrollPane();
+        String cssImages = ".scroll-bar:horizontal .thumb {-fx-background-color: rgb(40, 40, 40);}" + 
+            ".scroll-bar:horizontal .track {-fx-background-color: rgb(10, 10, 10);}" +
+            ".scroll-bar:horizontal .increment-button, .decrement-button {-fx-background-color :transparent;"+
+            "-fx-background-radius : 0.0; -fx-padding :0.0 0.0 5.0 0.0;}" +
+            ".scroll-bar:horizontal .increment-arrow, .decrement-arrow {-fx-shape : \" \"; -fx-padding :0.15em 0.0;}";
+                            
+        imagePane.getStylesheets().add("data:text/css," + cssImages);
+        imagePane.setVmax(0.0);
+        imagePane.setBackground(background);
+        imagePane.setFitToWidth(true);
+        imagePane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         HBox images = new HBox(20);
+        imagePane.setContent(images);
+        images.setBackground(background);
         images.setPadding(new Insets(10));
-        m_images = new Image[2];
-        for (int i = 0; i < m_images.length; i++) {
-            m_images[i] = new Image("file:" + Paths.get("textures/" + (i + 1) + ".jpg").toString());
-            Button imgButton = createButton(null);
-            imgButton.setGraphic(new ImageView(m_images[i]));
-            images.getChildren().add(imgButton);
-            final int imgId = i;
-            imgButton.setOnAction(new EventHandler<ActionEvent>() {
-                public void handle(ActionEvent event) {
-                    m_selectedImage = imgId;
-                }
-            });
+        String[] textureList = ImageList.get();
+        if (textureList == null) { // empty texture
+            m_images = new Image[1];
+        } else {
+            m_images = new Image[textureList.length + 1];
+            for (int i = 0; i < textureList.length; i++) {
+                m_images[i + 1] = new Image("file:" + textureList[i]);
+                Button imgButton = createButton(null);
+                imgButton.setGraphic(new ImageView(m_images[i + 1]));
+                images.getChildren().add(imgButton);
+                final int imgId = i + 1;
+                imgButton.setOnAction(new EventHandler<ActionEvent>() {
+                    public void handle(ActionEvent event) {
+                        m_selectedImage = imgId;
+                        m_addExits = false;
+                        m_removeExits = false;
+                    }
+                });
+            }
         }
+        // create default texture
+        {
+            byte[] pixels = new byte[ImageList.TEXTURE_SIZE * ImageList.TEXTURE_SIZE * 3];
+            for (int i = 0; i < ImageList.TEXTURE_SIZE * ImageList.TEXTURE_SIZE * 3; i += 3) {
+                pixels[i + 0] = (byte)255;
+                pixels[i + 1] = (byte)0;
+                pixels[i + 2] = (byte)255;
+            }
+
+            WritableImage img = new WritableImage(ImageList.TEXTURE_SIZE, ImageList.TEXTURE_SIZE);
+            PixelWriter pw = img.getPixelWriter();
+            pw.setPixels(0, 0, ImageList.TEXTURE_SIZE, ImageList.TEXTURE_SIZE, PixelFormat.getByteRgbInstance(),
+                         pixels, 0, ImageList.TEXTURE_SIZE * 3);
+            m_images[0] = img;
+        }
+        imagePane.addEventFilter(ScrollEvent.SCROLL, event -> {
+            double dist = event.getDeltaY() / m_images.length / 100;
+            imagePane.setHvalue(imagePane.getHvalue() - dist);
+            event.consume();
+        });
 
         // layout
         HBox canvasAndButtons = new HBox(20);
-        canvasAndButtons.getChildren().addAll(m_canvas, buttons);
+        canvasAndButtons.getChildren().addAll(m_canvas, m_buttons);
         VBox root = new VBox();
-        root.getChildren().addAll(canvasAndButtons, images);
-        Background background = new Background(new BackgroundFill(Color.rgb(20, 20, 20, 1.0), null, null));
+        root.getChildren().addAll(canvasAndButtons, imagePane);
         root.setBackground(background);
 
         m_scene = new Scene(root);
@@ -155,7 +250,8 @@ final public class Editor {
             for (int i = 0; i < m_map.getMapWidth(); i++) {
                 int tile = m_map.getMap()[j * m_map.getMapWidth() + i];
                 if (tile > 0) {
-                    m_gc.drawImage(m_images[tile - 1], mapMinX + i * tileSize, mapMinY + j * tileSize, tileSize, tileSize);
+                    if (tile >= m_images.length) tile = 0;
+                    m_gc.drawImage(m_images[tile], mapMinX + i * tileSize, mapMinY + j * tileSize, tileSize, tileSize);
                 }
             }
         }
@@ -167,6 +263,17 @@ final public class Editor {
         m_gc.strokeLine(mapMaxX, mapMaxY, mapMaxX, mapMinY);   
         m_gc.strokeLine(mapMaxX, mapMaxY, mapMinX, mapMaxY);
         
+        // draw exits
+        m_gc.setStroke(Color.RED);
+        for (int[] exitPos : m_map.getExits()) {
+            double minX = mapMinX + exitPos[0] * tileSize;
+            double minY = mapMinY + exitPos[1] * tileSize;
+            double maxX = minX + tileSize;
+            double maxY = minY + tileSize;
+            m_gc.strokeLine(minX, minY, maxX, maxY);
+            m_gc.strokeLine(minX, maxY, maxX, minY);
+        }
+
         // draw player
         double playerR = 5;
         if (!m_setPlayerDir) {
@@ -182,6 +289,15 @@ final public class Editor {
 
         double mouseX = input.getMousePosX();
         double mouseY = input.getMousePosY();
+
+        if (m_addExits || m_removeExits) {
+            if (input.isPressed("MOUSE_SECONDARY")) {
+                m_addExits = false;
+                m_removeExits = false;
+            }
+            m_selectedImage = -1;
+        } 
+
         // check if mouse is in canvas
         if (mouseX >= 0 && mouseY >= 0 && mouseX < m_width && mouseY < m_height) {
             int tileX = (int)(mouseX - mapMinX) / tileSize - (mouseX < mapMinX ? 1 : 0);
@@ -217,20 +333,63 @@ final public class Editor {
                 }
             } else {
                 // draw selected tile as a preview
-                if (m_selectedImage >= 0 && m_selectedImage < m_images.length) {
-                    m_gc.drawImage(m_images[m_selectedImage], m_cameraX + tileX * tileSize,
+                if (m_selectedImage >= 0) {
+                    int previewImg = m_selectedImage;
+                    if (previewImg >= m_images.length) previewImg = 0;
+                    m_gc.drawImage(m_images[previewImg], m_cameraX + tileX * tileSize,
                                 m_cameraY + tileY * tileSize, tileSize, tileSize);
                 }
                 // check if mouse in map
                 if (tileX >= 0 && tileY >= 0 && tileX < m_map.getMapWidth() && tileY < m_map.getMapHeight()) {
-                    if (m_selectedImage >= 0 && m_selectedImage < m_images.length && input.isHeld("MOUSE_PRIMARY")) {
-                        int playerTileX = (int)m_map.getPlayerPosX();
-                        int playerTileY = (int)m_map.getPlayerPosY();
-                        if (tileX != playerTileX || tileY != playerTileY) {
-                            m_map.getMap()[tileY * m_map.getMapWidth() + tileX] = m_selectedImage + 1;
+                    // add/remove exits
+                    if (m_addExits && input.isHeld("MOUSE_PRIMARY")) {
+                        int[][] exits = m_map.getExits();
+                        boolean foundNone = true;
+                        for (int i = 0; i < exits.length; i++) {
+                            if (exits[i][0] == tileX && exits[i][1] == tileY) {
+                                foundNone = false;
+                                break;
+                            }
                         }
-                    } else if (input.isHeld("MOUSE_SECONDARY")) {
-                        m_map.getMap()[tileY * m_map.getMapWidth() + tileX] = 0;
+                        if (foundNone) {
+                            int[][] newExits = new int[exits.length + 1][2];
+                            int i;
+                            for (i = 0; i < exits.length; i++) {
+                                newExits[i] = exits[i];
+                            }
+                            newExits[i][0] = tileX;
+                            newExits[i][1] = tileY;
+                            m_map.setExits(newExits);
+                        }
+                    } else if (m_removeExits && input.isHeld("MOUSE_PRIMARY")) {
+                        int[][] exits = m_map.getExits();
+                        boolean foundNone = true;
+                        for (int i = 0; i < exits.length; i++) {
+                            if (exits[i][0] == tileX && exits[i][1] == tileY) {
+                                foundNone = false;
+                                break;
+                            }
+                        }
+                        if (!foundNone) {
+                            int[][] newExits = new int[exits.length - 1][2];
+                            for (int i = 0; i < exits.length - 1; i++) {
+                                if (exits[i][0] == tileX && exits[i][1] == tileY) {
+                                    exits[i] = exits[exits.length - 1];
+                                }
+                                newExits[i] = exits[i];
+                            }
+                            m_map.setExits(newExits);
+                        }
+                    } else {   
+                        if (m_selectedImage >= 0 && m_selectedImage < m_images.length && input.isHeld("MOUSE_PRIMARY")) {
+                            int playerTileX = (int)m_map.getPlayerPosX();
+                            int playerTileY = (int)m_map.getPlayerPosY();
+                            if (tileX != playerTileX || tileY != playerTileY) {
+                                m_map.getMap()[tileY * m_map.getMapWidth() + tileX] = m_selectedImage;
+                            }
+                        } else if (input.isHeld("MOUSE_SECONDARY")) {
+                            m_map.getMap()[tileY * m_map.getMapWidth() + tileX] = 0;
+                        }
                     }
                 }
             }
@@ -241,6 +400,7 @@ final public class Editor {
         m_height = y - 100;
         m_canvas.setWidth(m_width);
         m_canvas.setHeight(m_height);
+        m_buttons.setMaxHeight(m_height);
     }
     public Scene getScene() {
         return m_scene;
@@ -268,6 +428,8 @@ final public class Editor {
         return tf;
     }
 
+    private boolean m_addExits;
+    private boolean m_removeExits;
     private boolean m_setPlayerDir;
     private boolean m_setPlayer;
     private int m_selectedImage;
@@ -279,6 +441,7 @@ final public class Editor {
     private int m_height;
     private Image[] m_images;
     private Canvas m_canvas;
+    private ScrollPane m_buttons;
     private GraphicsContext m_gc;
     private Scene m_scene;
     private boolean m_exit;

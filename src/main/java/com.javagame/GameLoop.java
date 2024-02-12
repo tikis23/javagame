@@ -17,6 +17,7 @@ final public class GameLoop {
         m_pause = true;
         m_mainStage = mainStage;
         m_edit = false;
+        m_editor = null;
 
         // Menu setup
         m_menu = new Menu();
@@ -31,9 +32,9 @@ final public class GameLoop {
     public void start() {
         Input input = new Input(m_stackPaneScene);
         Renderer renderer = new Renderer(m_root, m_oldSizeX, m_oldSizeY);
-        Editor editor = new Editor(m_oldSizeX, m_oldSizeY);
-        World world = new World("test");
-        renderer.render(world); // just to have something in the background
+        m_world = new World("hub");
+        m_world.setComplete(); // no enemies in first map
+        renderer.render(m_world); // just to have something in the background
 
         m_menu.setOnPlay(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
@@ -44,7 +45,10 @@ final public class GameLoop {
         m_menu.setOnEdit(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 if (!m_edit) {
-                    m_stackPane.getChildren().add(editor.getScene().getRoot());
+                    if (m_editor == null) {
+                        m_editor = new Editor(m_oldSizeX, m_oldSizeY); // dont create if not needed
+                    }
+                    m_stackPane.getChildren().add(m_editor.getScene().getRoot());
                     m_edit = true;
                 }
             }
@@ -77,15 +81,15 @@ final public class GameLoop {
                     m_oldSizeX = (int)m_stackPaneScene.getWidth();
                     m_oldSizeY = (int)m_stackPaneScene.getHeight();
                     renderer.resize(m_oldSizeX, m_oldSizeY);
-                    editor.resize(m_oldSizeX, m_oldSizeY);
+                    if (m_editor != null) m_editor.resize(m_oldSizeX, m_oldSizeY);
                     
-                    if (m_pause) renderer.render(world);
+                    if (m_pause) renderer.render(m_world);
                 }
 
-                if (m_edit) {
-                    editor.run(input, dt);
-                    if (editor.shouldExit()) {
-                        m_stackPane.getChildren().remove(editor.getScene().getRoot());
+                if (m_edit && m_editor != null) {
+                    m_editor.run(input, dt);
+                    if (m_editor.shouldExit()) {
+                        m_stackPane.getChildren().remove(m_editor.getScene().getRoot());
                         m_edit = false;
                     }
                     return;
@@ -97,13 +101,20 @@ final public class GameLoop {
                 }
 
                if (!m_pause) {
-                    world.update(input, dt);
-                    renderer.render(world);
+                    if (m_world.finish()) {
+                        String nextWorld = m_world.getTargetMap();
+                        m_world = new World(nextWorld);
+                    }
+
+                    m_world.update(input, dt);
+                    renderer.render(m_world);
                }
             }
         }.start();
     }
 
+    private World m_world;
+    private Editor m_editor;
     private boolean m_edit;
     private Stage m_mainStage;
     private Menu m_menu;

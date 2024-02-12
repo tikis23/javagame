@@ -9,11 +9,25 @@ public class WorldMap {
     public WorldMap(String mapName) {
         if (mapName == null) {
             createDefaultMap();
+        } else if ("hub".equals(mapName)) {
+            m_mapWidth = 10;
+            m_mapHeight = 10;
+            m_map = new int[] {
+                2,2,2,2,1,1,2,2,2,2,2,0,0,0,0,0,0,0,0,2,
+                2,0,3,0,0,0,0,3,0,2,2,0,0,0,0,0,0,0,0,2,
+                2,0,3,0,0,0,0,3,0,2,2,0,3,0,0,0,0,3,0,2,
+                2,0,0,0,0,0,0,0,0,2,2,0,3,0,3,3,0,3,0,2,
+                2,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2
+            };
+            m_exits = new int[][] {{4, 0}, {5, 0}};
+            m_targetMap = "start";
+            setPlayerPos(5, 6);
+            setPlayerDir(0, -1);
         } else {
             loadFromFile(mapName);
         }
     }
-    public WorldMap(int mapWidth, int mapHeight, int[] mapData) {
+    public WorldMap(int mapWidth, int mapHeight, int[] mapData, String targetMap) {
         m_mapWidth = mapWidth;
         m_mapHeight = mapHeight;
         if (mapData == null) m_map = new int[m_mapWidth * m_mapHeight];
@@ -30,6 +44,8 @@ public class WorldMap {
     }
     public void loadFromFile(String fileName) {
         m_map = null;
+        m_targetMap = "";
+        m_exits = null;
         m_mapWidth = -1;
         m_mapHeight = -1;
         try {
@@ -39,12 +55,20 @@ public class WorldMap {
             m_playerPosY = data.getDouble("playerPosY");
             m_playerDirX = data.getDouble("playerDirX");
             m_playerDirY = data.getDouble("playerDirY");
+            m_targetMap = data.optString("targetMap");
             m_mapWidth = data.getInt("mapWidth");
             m_mapHeight = data.getInt("mapHeight");
             JSONArray jarray = data.getJSONArray("mapData");
             m_map = new int[jarray.length()];
             for (int i = 0; i < jarray.length(); i++) {
                 m_map[i] = jarray.getInt(i);
+            }
+            jarray = data.getJSONArray("exits");
+            m_exits = new int[jarray.length()][2];
+            for (int i = 0; i < jarray.length(); i++) {
+                JSONArray subarray = jarray.getJSONArray(i);
+                m_exits[i][0] = subarray.getInt(0);
+                m_exits[i][1] = subarray.getInt(1);
             }
         } catch (IOException e) {
             System.out.println("Failed to load file: " + m_filePath + fileName + ".json");
@@ -56,7 +80,8 @@ public class WorldMap {
             return;
         }
         // use an empty map to avoid errors
-        if (m_map == null || m_map.length < m_mapWidth * m_mapHeight || m_mapWidth < 1 || m_mapHeight < 1) {
+        if (m_map == null || m_exits == null || m_map.length < m_mapWidth * m_mapHeight ||
+            m_mapWidth < 1 || m_mapHeight < 1) {
             System.out.println("Failed to load file: " + m_filePath + fileName + ".json");
             createDefaultMap();
         }
@@ -64,6 +89,8 @@ public class WorldMap {
     public void saveToFile(String fileName) {
         JSONObject data = new JSONObject();
         data.put("mapData", m_map);
+        data.put("exits", m_exits);
+        data.put("targetMap", m_targetMap);
         data.put("mapWidth", m_mapWidth);
         data.put("mapHeight", m_mapHeight);
         data.put("playerPosX", m_playerPosX);
@@ -99,6 +126,8 @@ public class WorldMap {
         m_mapWidth = 2;
         m_mapHeight = 2;
         m_map = new int[]{0,0,0,0};
+        m_exits = new int[][] {{-100000, -10000}};
+        m_targetMap = "start";
         setPlayerPos(1, 1);
         setPlayerDir(1, 0);
     }
@@ -122,8 +151,22 @@ public class WorldMap {
     public double getPlayerDirY() {
         return m_playerDirY;
     }
+    public void setTargetMap(String target) {
+        m_targetMap = target;
+    }
+    public String getTargetMap() {
+        return m_targetMap;
+    }
+    public void setExits(int[][] exits) {
+        m_exits = exits;
+    }
+    public int[][] getExits() {
+        return m_exits;
+    }
 
+    private String m_targetMap;
     private static String m_filePath = "maps/";
+    private int[][] m_exits;
     private int m_mapWidth;
     private int m_mapHeight;
     private double m_playerPosX;
