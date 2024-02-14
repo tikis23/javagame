@@ -32,6 +32,10 @@ final public class Physics {
             Point2D vel = body.getVelocity();
             double r = body.getCollisionRadius();
 
+            // check if in bounds
+            if ((int)pos.getX() < 0 || (int)pos.getX() >= m_mapWidth || 
+                (int)pos.getY() < 0 || (int)pos.getY() >= m_mapHeight) continue;
+
             boolean collidingWithWall = false;
             if (body.collisionFlags.contains(CollideMask.WALL)) {
                 Point2D rDir = new Point2D(vel.getX() > 0 ? r : -r, vel.getY() > 0 ? r : -r);
@@ -67,6 +71,7 @@ final public class Physics {
             // collide with other bodies
             HashSet<Entity> collidedWith = new HashSet<>();
             for (Entity other : m_entitites.values()) {
+                if (ent == other) continue;
                 RigidBody otherBody = other.getRigidBody();
                 if (body.collisionFlags.contains(otherBody.getCollisionType()) && otherBody.collisionFlags.contains(body.getCollisionType())) {
                     double bodyDist = pos.add(vel).distance(otherBody.getPosition());
@@ -78,6 +83,7 @@ final public class Physics {
                             collidedWith.add(other);
                         }
                         // adjust velocity
+                        if (ent instanceof Bullet || other instanceof Bullet) continue;
                         Point2D offsetDir = pos.add(vel).subtract(otherBody.getPosition()).normalize();
                         offsetDir = offsetDir.multiply(minDist - bodyDist);
                         vel = vel.add(offsetDir);

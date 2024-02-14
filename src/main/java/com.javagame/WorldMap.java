@@ -4,12 +4,21 @@ import org.json.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import javafx.geometry.Point2D;
 
 public class WorldMap {
+    public static final HashMap<String, Class<?>> enemyNames = new HashMap<>();
+    static {
+        enemyNames.put("Blob", Blob.class);
+        enemyNames.put("Hobo", Hobo.class);
+    }
+ 
     public WorldMap(String mapName) {
         if (mapName == null) {
             createDefaultMap();
         } else if ("hub".equals(mapName)) {
+            createDefaultMap();
             m_mapWidth = 10;
             m_mapHeight = 10;
             m_map = new int[] {
@@ -20,18 +29,12 @@ public class WorldMap {
                 2,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2
             };
             m_exits = new int[][] {{4, 0}, {5, 0}};
-            m_targetMap = "start";
+            m_targetMap = "level1";
             setPlayerPos(5, 6);
             setPlayerDir(0, -1);
         } else {
             loadFromFile(mapName);
         }
-    }
-    public WorldMap(int mapWidth, int mapHeight, int[] mapData, String targetMap) {
-        m_mapWidth = mapWidth;
-        m_mapHeight = mapHeight;
-        if (mapData == null) m_map = new int[m_mapWidth * m_mapHeight];
-        else m_map = mapData;
     }
     public int[] getMap() {
         return m_map;
@@ -44,6 +47,7 @@ public class WorldMap {
     }
     public void loadFromFile(String fileName) {
         m_map = null;
+        m_enemies = new EnemyData[0];
         m_targetMap = "";
         m_exits = null;
         m_mapWidth = -1;
@@ -70,6 +74,12 @@ public class WorldMap {
                 m_exits[i][0] = subarray.getInt(0);
                 m_exits[i][1] = subarray.getInt(1);
             }
+            jarray = data.getJSONArray("enemies");
+            m_enemies = new EnemyData[jarray.length()];
+            for (int i = 0; i < jarray.length(); i++) {
+                JSONObject obj = jarray.getJSONObject(i);
+                m_enemies[i] = new EnemyData(obj.getString("name"), new Point2D(obj.getDouble("x"), obj.getDouble("y")));
+            }
         } catch (IOException e) {
             System.out.println("Failed to load file: " + m_filePath + fileName + ".json");
             createDefaultMap();
@@ -80,7 +90,7 @@ public class WorldMap {
             return;
         }
         // use an empty map to avoid errors
-        if (m_map == null || m_exits == null || m_map.length < m_mapWidth * m_mapHeight ||
+        if (m_enemies == null || m_map == null || m_exits == null || m_map.length < m_mapWidth * m_mapHeight ||
             m_mapWidth < 1 || m_mapHeight < 1) {
             System.out.println("Failed to load file: " + m_filePath + fileName + ".json");
             createDefaultMap();
@@ -88,6 +98,13 @@ public class WorldMap {
     }
     public void saveToFile(String fileName) {
         JSONObject data = new JSONObject();
+
+        JSONArray enemiesJson = new JSONArray();
+        for (EnemyData enemyData : m_enemies) {
+            JSONObject enemy = new JSONObject().put("name", enemyData.name).put("x", enemyData.pos.getX()).put("y", enemyData.pos.getY());
+            enemiesJson.put(enemy);
+        }
+        data.put("enemies", enemiesJson);
         data.put("mapData", m_map);
         data.put("exits", m_exits);
         data.put("targetMap", m_targetMap);
@@ -127,6 +144,7 @@ public class WorldMap {
         m_mapHeight = 2;
         m_map = new int[]{0,0,0,0};
         m_exits = new int[][] {{-100000, -10000}};
+        m_enemies = new EnemyData[0];
         m_targetMap = "start";
         setPlayerPos(1, 1);
         setPlayerDir(1, 0);
@@ -163,7 +181,23 @@ public class WorldMap {
     public int[][] getExits() {
         return m_exits;
     }
+    public EnemyData[] getEnemies() {
+        return m_enemies;
+    }
+    public void setEnemies(EnemyData[] enemies) {
+        m_enemies = enemies;
+    }
 
+    public static final class EnemyData {
+        public EnemyData(String name, Point2D pos) {
+            this.name = name;
+            this.pos = pos;
+        }
+        String name;
+        Point2D pos;
+    }
+
+    private EnemyData[] m_enemies;
     private String m_targetMap;
     private static String m_filePath = "maps/";
     private int[][] m_exits;

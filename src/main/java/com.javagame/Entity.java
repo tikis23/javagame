@@ -47,6 +47,9 @@ public abstract class Entity {
     public int getHealth() {
         return m_health;
     }
+    public int getMaxHealth() {
+        return m_maxHealth;
+    }
     public void setDamage(int damage) {
         m_damage = damage;
     }

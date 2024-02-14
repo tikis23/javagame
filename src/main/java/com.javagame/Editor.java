@@ -24,6 +24,8 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.ScrollEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 final public class Editor {
     public Editor(int windowWidth, int windowHeight) {
@@ -37,6 +39,7 @@ final public class Editor {
         m_setPlayer = false;
         m_addExits = false;
         m_removeExits = false;
+        m_enemySelected = null;
         Background background = new Background(new BackgroundFill(Color.rgb(20, 20, 20, 1.0), null, null));
 
         // setup canvas
@@ -52,6 +55,10 @@ final public class Editor {
         exitButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 m_exit = true;
+                m_setPlayer = false;
+                m_addExits = false;
+                m_removeExits = false;
+                m_enemySelected = null;
             }
         });
         Button newButton = createButton("New");
@@ -79,7 +86,7 @@ final public class Editor {
                 if (mapSizeX.getText() == null || mapSizeY.getText() == null) return;
                 if (mapSizeX.getText().isEmpty() || mapSizeY.getText().isEmpty()) return;
                 try {
-                    m_map.resize(Integer.parseInt(mapSizeX.getText()), Integer.parseInt(mapSizeX.getText()));
+                    m_map.resize(Integer.parseInt(mapSizeX.getText()), Integer.parseInt(mapSizeY.getText()));
                 } catch (NumberFormatException e) {
                 }
             }
@@ -141,10 +148,29 @@ final public class Editor {
             }
         });
 
+        // enemy spawners
+        ArrayList<Button> enemyButtons = new ArrayList<>();
+        for (String enemyName : WorldMap.enemyNames.keySet()) {
+            Button enemyButton = createButton("Add " + enemyName);
+            enemyButtons.add(enemyButton);
+            enemyButton.setOnAction(new EventHandler<ActionEvent>() {
+                public void handle(ActionEvent event) {
+                    m_enemySelected = enemyName;
+                }
+            });
+        }
+        Button deleteEnemy = createButton("Remove enemy");
+        deleteEnemy.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent event) {
+                m_enemySelected = "__ENEMY__DELETE__";
+            }
+        });
+
         VBox buttonBox = new VBox(20);
         buttonBox.setPadding(new Insets(0, 5, 0, 0));
         buttonBox.getChildren().addAll(newFileName, saveButton, loadButton, exitButton, newButton,
-                mapSizeX, mapSizeY, resizeButton, setPlayer, mapTarget, addExits, removeExits);
+                mapSizeX, mapSizeY, resizeButton, setPlayer, mapTarget, addExits, removeExits, deleteEnemy);
+        buttonBox.getChildren().addAll(enemyButtons);
         m_buttons = new ScrollPane();
         String cssButtons = ".scroll-bar:vertical .thumb {-fx-background-color: rgb(40, 40, 40);}" + 
             ".scroll-bar:vertical .track {-fx-background-color: rgb(10, 10, 10);}" +
@@ -273,7 +299,7 @@ final public class Editor {
             m_gc.strokeLine(minX, minY, maxX, maxY);
             m_gc.strokeLine(minX, maxY, maxX, minY);
         }
-
+        
         // draw player
         double playerR = 5;
         if (!m_setPlayerDir) {
@@ -286,6 +312,15 @@ final public class Editor {
         m_gc.fillOval(mapMinX + m_map.getPlayerPosX() * tileSize - playerR,
                       mapMinY + m_map.getPlayerPosY() * tileSize - playerR,
                       playerR * 2, playerR * 2);
+
+        // draw enemies
+        for (WorldMap.EnemyData enemy : m_map.getEnemies()) {
+            // get random color from name
+            int hash = enemy.name.hashCode();
+            m_gc.setFill(Color.hsb(hash, 1.0, 1.0));
+            m_gc.fillOval(mapMinX + enemy.pos.getX() * tileSize - playerR, mapMinY + enemy.pos.getY() * tileSize - playerR,
+                          playerR * 2, playerR * 2);
+        }
 
         double mouseX = input.getMousePosX();
         double mouseY = input.getMousePosY();
@@ -303,6 +338,9 @@ final public class Editor {
             int tileX = (int)(mouseX - mapMinX) / tileSize - (mouseX < mapMinX ? 1 : 0);
             int tileY = (int)(mouseY - mapMinY) / tileSize - (mouseY < mapMinY ? 1 : 0);
             if (m_setPlayer) {
+                m_addExits = false;
+                m_removeExits = false;
+                m_enemySelected = null;
                 m_selectedImage = -1;
                 // draw new player
                 m_gc.setFill(Color.GREEN);
@@ -319,6 +357,9 @@ final public class Editor {
                     m_setPlayer = false;
                 }
             } else if (m_setPlayerDir) {
+                m_addExits = false;
+                m_removeExits = false;
+                m_enemySelected = null;
                 m_selectedImage = -1;
                 // draw new player dir
                 Point2D newDir = new Point2D(mapMinX + m_map.getPlayerPosX() * tileSize, mapMinY + m_map.getPlayerPosY() * tileSize);
@@ -330,6 +371,49 @@ final public class Editor {
                 if (input.isPressed("MOUSE_PRIMARY") || input.isPressed("MOUSE_SECONDARY")) {
                     m_map.setPlayerDir(newDir.getX(), newDir.getY());
                     m_setPlayerDir = false;
+                }
+            } else if (m_enemySelected != null) {
+                m_setPlayer = false;
+                m_setPlayerDir = false;
+                m_addExits = false;
+                m_removeExits = false;
+                m_selectedImage = -1;
+                
+                if ("__ENEMY__DELETE__".equals(m_enemySelected)) {
+                    m_gc.setFill(Color.RED);
+                    m_gc.fillRect(mouseX - playerR, mouseY - playerR, playerR * 2, playerR * 2);
+                } else {
+                    // get random color from name
+                    int hash = m_enemySelected.hashCode();
+                    m_gc.setFill(Color.hsb(hash, 1.0, 1.0));
+                    m_gc.fillOval(mouseX - playerR, mouseY - playerR, playerR * 2, playerR * 2);
+                }
+                if (tileX >= 0 && tileY >= 0 && tileX < m_map.getMapWidth() && tileY < m_map.getMapHeight()) {
+                    if (m_map.getMap()[tileY * m_map.getMapWidth() + tileX] == 0) {
+                        Point2D pos = new Point2D((mouseX - mapMinX) / tileSize, (mouseY - mapMinY) / tileSize);
+                        if ("__ENEMY__DELETE__".equals(m_enemySelected)) {
+                            if (input.isHeld("MOUSE_PRIMARY")) {
+                                // find closest enemies and delete
+                                ArrayList<WorldMap.EnemyData> enemies = new ArrayList<>(Arrays.asList(m_map.getEnemies()));
+                                double delRadius = 0.5;
+                                for (int i = 0; i < enemies.size(); i++) {
+                                    if (enemies.get(i).pos.distance(pos) < delRadius) {
+                                        enemies.remove(i);
+                                        i--;
+                                    }
+                                }
+                                m_map.setEnemies(enemies.toArray(new WorldMap.EnemyData[0]));
+                            }
+                        } else if (input.isPressed("MOUSE_PRIMARY")) {
+                            // create enemy at location
+                            ArrayList<WorldMap.EnemyData> enemies = new ArrayList<>(Arrays.asList(m_map.getEnemies()));
+                            enemies.add(new WorldMap.EnemyData(m_enemySelected, pos));
+                            m_map.setEnemies(enemies.toArray(new WorldMap.EnemyData[0]));
+                        }
+                    }
+                } 
+                if (input.isPressed("MOUSE_SECONDARY")) {
+                    m_enemySelected = null;
                 }
             } else {
                 // draw selected tile as a preview
@@ -343,6 +427,10 @@ final public class Editor {
                 if (tileX >= 0 && tileY >= 0 && tileX < m_map.getMapWidth() && tileY < m_map.getMapHeight()) {
                     // add/remove exits
                     if (m_addExits && input.isHeld("MOUSE_PRIMARY")) {
+                        m_setPlayer = false;
+                        m_setPlayerDir = false;
+                        m_enemySelected = null;
+                        m_selectedImage = -1;
                         int[][] exits = m_map.getExits();
                         boolean foundNone = true;
                         for (int i = 0; i < exits.length; i++) {
@@ -362,6 +450,10 @@ final public class Editor {
                             m_map.setExits(newExits);
                         }
                     } else if (m_removeExits && input.isHeld("MOUSE_PRIMARY")) {
+                        m_setPlayer = false;
+                        m_setPlayerDir = false;
+                        m_enemySelected = null;
+                        m_selectedImage = -1;
                         int[][] exits = m_map.getExits();
                         boolean foundNone = true;
                         for (int i = 0; i < exits.length; i++) {
@@ -428,6 +520,7 @@ final public class Editor {
         return tf;
     }
 
+    private String m_enemySelected;
     private boolean m_addExits;
     private boolean m_removeExits;
     private boolean m_setPlayerDir;

@@ -3,16 +3,16 @@ package com.javagame;
 import javafx.geometry.Point2D;
 import java.util.EnumSet;
 
-final public class Blob extends Enemy {
-    public Blob(Point2D position) {
-        super(Sprite.get("blob.png", 64, false), 1000, 200, 1.0, position, 0.5, 0.5, 0.5);
+final public class Hobo extends Enemy {
+    public Hobo(Point2D position) {
+        super(Sprite.get("hobo.png", 64, false), 1000, 200, 0.6, position, 0.5, 0.3, 0.5);
         m_walking = false;
         m_attacking = false;
-        m_speed = 0.0005;
-        m_attackRange = 1.0;
+        m_speed = 0.0015;
+        m_attackRange = 0.6;
         m_path = new Pathfinding(400);
 
-        m_animIdle = new Animation(0, 1, 1, 2, true, 1);
+        m_animIdle = new Animation(3, 5, 2, 2, true, 1);
         m_animWalking = new Animation(0, 3, 1, 8, true, 1);
         m_animAttacking = new Animation(5, 6, 1, 4, false, 1);
         m_animTakeDamage = new Animation(10, 10, 1, 5, false, 1);
@@ -61,7 +61,7 @@ final public class Blob extends Enemy {
                     Point2D from = path[startIndex];
                     if (startIndex + 1 < path.length) from = path[startIndex + 1];
                     Point2D diff = from.subtract(body.getPosition());
-                    diff = diff.normalize().multiply(speed);
+                    diff = diff.multiply(speed);
                     body.addVelocity(diff);
                 }
             }

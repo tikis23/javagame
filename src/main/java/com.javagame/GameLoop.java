@@ -32,7 +32,7 @@ final public class GameLoop {
     public void start() {
         Input input = new Input(m_stackPaneScene);
         Renderer renderer = new Renderer(m_root, m_oldSizeX, m_oldSizeY);
-        m_world = new World("hub");
+        m_world = new World("hub", null);
         m_world.setComplete(); // no enemies in first map
         renderer.render(m_world); // just to have something in the background
 
@@ -103,11 +103,17 @@ final public class GameLoop {
                if (!m_pause) {
                     if (m_world.finish()) {
                         String nextWorld = m_world.getTargetMap();
-                        m_world = new World(nextWorld);
+                        m_world = new World(nextWorld, m_world.player);
                     }
 
                     m_world.update(input, dt);
                     renderer.render(m_world);
+                    if (m_world.player.getHealth() <= 0) {
+                        m_pause = true;
+                        m_stackPane.getChildren().add(m_menu.getScene().getRoot());
+                        m_world = new World("hub", null);
+                        m_world.setComplete(); // no enemies in first map
+                    }
                }
             }
         }.start();

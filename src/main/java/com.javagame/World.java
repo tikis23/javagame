@@ -4,9 +4,10 @@ import javafx.geometry.Point2D;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.lang.reflect.InvocationTargetException;
 
 final public class World {
-    public World(String name) {
+    public World(String name, Player oldPlayer) {
         m_complete = false;
         m_finish = false;
 
@@ -17,12 +18,26 @@ final public class World {
         m_entities = new ArrayList<>();
         m_addEntityQueue = new ArrayList<>();
 
-        player = new Player(m_map.getPlayerPosX(), m_map.getPlayerPosY());
+        if (oldPlayer == null) {
+            player = new Player(m_map.getPlayerPosX(), m_map.getPlayerPosY(), this);
+        } else {
+            player = oldPlayer;
+            player.setPos(m_map.getPlayerPosX(), m_map.getPlayerPosY());
+        }
         player.setDir(m_map.getPlayerDirX(), m_map.getPlayerDirY());
         addEntity(player, false);
 
-        Blob blob = new Blob(player.getPos());
-        addEntity(blob, false);
+        for (WorldMap.EnemyData enemy : m_map.getEnemies()) {
+            Class<?> cl = WorldMap.enemyNames.get(enemy.name);
+            if (cl == null) continue;
+            try {
+                Enemy en = (Enemy)cl.getConstructor(Point2D.class).newInstance(enemy.pos);
+                addEntity(en, false);
+            } catch(NoSuchMethodException | SecurityException | InstantiationException |
+                IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                System.out.println("Failed to create enemy " + enemy.name);
+            }
+        }
     }
     public int[] getMap() {
         return m_map.getMap();

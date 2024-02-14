@@ -6,6 +6,7 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritablePixelFormat;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import javafx.scene.canvas.*;
 import javafx.geometry.Point2D;
 import java.nio.file.Paths;
@@ -183,6 +184,18 @@ final public class Renderer {
         
         writer.setPixels(0, 0, m_height, m_width, PixelFormat.getByteRgbInstance(), m_buffer, 0, m_height*3);
         m_gc.drawImage(m_image, -m_height, 0);
+        
+        // draw gun sprite on top
+        Sprite gun = world.player.getGunSprite();
+        if (gun != null) {
+            int gunFrame = world.player.getGunSpriteFrame();
+            int size = (int)(m_height / 2.5);
+            m_gc.drawImage(gun.getImageTile(gunFrame), -m_height, m_width / 2 - size / 2, size, size);
+        }
+
+        // make screen red if health is lower
+        m_gc.setFill(Color.rgb(200, 10, 10, 0.8 * (1.0 - world.player.getHealth() / (double)world.player.getMaxHealth())));
+        m_gc.fillRect(-m_height, 0, m_height, m_width);
     }
     private void fillLine(int x, int texX, double h, int side, int textureId) {
         if (textureId >= m_textures.length) textureId = 0;
