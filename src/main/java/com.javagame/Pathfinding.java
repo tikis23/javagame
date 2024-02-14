@@ -66,6 +66,7 @@ final public class Pathfinding {
                 node.g += costNormal;
                 node.h = costNormal * heuristic(node.x, targetX, node.y, targetY);
                 if (node.h > terminateDist) continue;
+                closed[node.y * mapWidth + node.x] = true;
                 open.add(node);
             }
             // walk vertically
@@ -78,11 +79,73 @@ final public class Pathfinding {
                 node.g += costNormal;
                 node.h = costNormal * heuristic(node.x, targetX, node.y, targetY);
                 if (node.h > terminateDist) continue;
+                closed[node.y * mapWidth + node.x] = true;
                 open.add(node);
+            }
+            // walk diagonally
+            for (int x = -1; x <= 1; x += 2) {
+                for (int y = -1; y <= 1; y += 2) {
+                    PathNode node = parent.clone();
+                    node.x += x;
+                    node.y += y;
+                    int index = node.y * mapWidth + node.x;
+                    if (node.x < 0 || node.x >= mapWidth || node.y < 0 || node.y >= mapHeight ||
+                        closed[index] || map[index] != 0) continue;
+                    if (map[index - x] != 0 && map[index - y * mapWidth] != 0) continue; // skip if blocked
+                    node.prev = parent;
+                    node.g += costNormal;
+                    node.h = costNormal * heuristic(node.x, targetX, node.y, targetY);
+                    if (node.h > terminateDist) continue;
+                    closed[node.y * mapWidth + node.x] = true;
+                    open.add(node);
+                }
             }
         }
 
         return null;
+    }
+    public static double castRay(World world, Point2D pos, Point2D dir) {
+        boolean hit = false;
+        // setup dda
+        int gridX = (int)pos.getX();
+        int gridY = (int)pos.getY();
+        Point2D deltaDist = new Point2D(dir.getX() == 0 ? Double.MAX_VALUE : Math.abs(1.0 / dir.getX()),
+                                        dir.getY() == 0 ? Double.MAX_VALUE : Math.abs(1.0 / dir.getY()));
+        int rayStepX = dir.getX() > 0 ? 1 : -1;
+        int rayStepY = dir.getY() > 0 ? 1 : -1;
+        Point2D sideDist = new Point2D(
+            (rayStepX * ((double)gridX - pos.getX()) + (double)rayStepX * 0.5 + 0.5) * deltaDist.getX(),
+            (rayStepY * ((double)gridY - pos.getY()) + (double)rayStepY * 0.5 + 0.5) * deltaDist.getY()
+        );
+        int hitDir = 1;
+        // raycast
+        int[] map = world.getMap();
+        while (gridX >= 0 && gridY >= 0 && gridX < world.getMapWidth() && gridY < world.getMapHeight()) {
+            int tileIndex = gridY * world.getMapWidth() + gridX;
+            int tile = map[tileIndex];
+            if (tile != 0) {
+                hit = true;
+                break;
+            }
+            if (sideDist.getX() < sideDist.getY()) {
+                sideDist = sideDist.add(deltaDist.getX(), 0);
+                gridX += rayStepX;
+                hitDir = 1;
+            } else {
+                sideDist = sideDist.add(0, deltaDist.getY());
+                gridY += rayStepY;
+                hitDir = 2;
+            }
+        }
+
+        if (hit) {
+            double hitDist = hitDir == 1 ? sideDist.getX() - deltaDist.getX() : sideDist.getY() - deltaDist.getY();
+            hitDist = sideDist.magnitude();
+            if (hitDist <= 0) hitDist = 0.001;
+            return hitDist;
+        }
+
+        return Double.MAX_VALUE;
     }
     private static int heuristic(int x1, int x2, int y1, int y2) {
         return Math.abs(x1 - x2) + Math.abs(y1 - y2);
