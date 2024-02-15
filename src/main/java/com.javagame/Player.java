@@ -11,20 +11,41 @@ final public class Player extends Entity {
         m_healTimer = 0;
         m_dir = new Point2D(1, 0).normalize();
         getRigidBody().setCollisionType(Physics.CollideMask.PLAYER);
-        getRigidBody().collisionFlags = EnumSet.of(
-            Physics.CollideMask.WALL, Physics.CollideMask.ENEMY);
+        getRigidBody().collisionFlags = EnumSet.of(Physics.CollideMask.WALL, Physics.CollideMask.ENEMY,
+                                                   Physics.CollideMask.ENEMY_BULLET);
         m_world = world;
+
         m_guns = new Gun[] {
-            new Gun(Sprite.get("pistol.png", 128, true), 0, new Animation(0, 6, 1, 15, false, 5), () -> {
-                Bullet bullet = new PistolBullet(getPos(), m_dir.add(getRigidBody().getVelocity()), 0.05, 200);
+            new Gun(Sprite.get("pistol.png", 128, true), 1, new Animation(0, 6, 1, 15, false, 5), () -> {
+                Point2D perpDir = new Point2D(-getDir().getY(), getDir().getX());
+                Point2D vel = m_dir.add(getRigidBody().getVelocity());
+                Bullet bullet = new PistolBullet(getPos(), vel.add(perpDir.multiply((Math.random() - 0.5) * 0.05)), 0.05, 200);
                 m_world.addEntity(bullet, true);
             }),
             new Gun(Sprite.get("chaingun.png", 128, true), 0, new Animation(0, 3, 1, 40, false, 1), () -> {
-                Bullet bullet = new PistolBullet(getPos(), m_dir.add(getRigidBody().getVelocity()), 0.1, 400);
+                Point2D perpDir = new Point2D(-getDir().getY(), getDir().getX());
+                Point2D vel = m_dir.add(getRigidBody().getVelocity());
+                Bullet bullet = new PistolBullet(getPos(), vel.add(perpDir.multiply((Math.random() - 0.5) * 0.1)), 0.1, 300);
                 m_world.addEntity(bullet, true);
             }),
-            new Gun(Sprite.get("plasmagun.png", 128, true), 3, new Animation(0, 3, 1, 3, false, 2), () -> {
-                Bullet bullet = new PlasmaBullet(getPos(), m_dir.add(getRigidBody().getVelocity()), 0.01, 800);
+            new Gun(Sprite.get("plasmagun.png", 128, true), 3, new Animation(0, 3, 1, 4, false, 2), () -> {
+                Point2D perpDir = new Point2D(-getDir().getY(), getDir().getX());
+                Point2D vel = m_dir.add(getRigidBody().getVelocity());
+                Bullet bullet = new PlasmaBullet(getPos(), vel.add(perpDir.multiply((Math.random() - 0.5) * 0.01)), 0.005, 800);
+                bullet.setPierce(3);
+                bullet.getRigidBody().setMaxSpeed(4.0);
+                bullet.setAcceleration(1.02);
+                m_world.addEntity(bullet, true);
+            }),
+            new Gun(Sprite.get("shotgun.png", 256, true), 1, new Animation(0, 9, 1, 13, false, 1), () -> {
+                double spread = 0.1;
+                Point2D perpDir = new Point2D(-getDir().getY(), getDir().getX());
+                Point2D vel = m_dir.add(getRigidBody().getVelocity());
+                Bullet bullet = new ShotgunBullet(getPos(), vel.add(perpDir.multiply((Math.random() - 0.5) * 0.01)), 0.15, 600);
+                m_world.addEntity(bullet, true);
+                bullet = new ShotgunBullet(getPos(), vel.add(perpDir.multiply(-spread).multiply((Math.random() * 0.5 + 0.75))), 0.15, 600);
+                m_world.addEntity(bullet, true);
+                bullet = new ShotgunBullet(getPos(), vel.add(perpDir.multiply(spread).multiply((Math.random() * 0.5 + 0.75))), 0.15, 600);
                 m_world.addEntity(bullet, true);
             }),
         };
@@ -72,6 +93,8 @@ final public class Player extends Entity {
             m_currentGun = 1;
         } else if (input.isPressed("DIGIT3")) {
             m_currentGun = 2;
+        } else if (input.isPressed("DIGIT4")) {
+            m_currentGun = 3;
         }
 
         // shooting
@@ -111,7 +134,8 @@ final public class Player extends Entity {
 
     @Override public void onCollideWall() {}
     @Override public void onCollideEntity(Entity ent) {
-        
+        if (ent.getRigidBody().getCollisionType() != Physics.CollideMask.ENEMY_BULLET) return;
+        takeDamage(ent.getDamage());
     }
     
     private World m_world;

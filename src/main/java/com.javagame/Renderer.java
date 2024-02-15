@@ -189,7 +189,7 @@ final public class Renderer {
         Sprite gun = world.player.getGunSprite();
         if (gun != null) {
             int gunFrame = world.player.getGunSpriteFrame();
-            int size = (int)(m_height / 2.5);
+            int size = (int)(m_height / 250 * gun.getTileSize());
             m_gc.drawImage(gun.getImageTile(gunFrame), -m_height, m_width / 2 - size / 2, size, size);
         }
 

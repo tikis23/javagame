@@ -9,6 +9,7 @@ final public class Physics {
         PLAYER,
         WALL,
         BULLET,
+        ENEMY_BULLET,
         ENEMY
     }
 
@@ -72,6 +73,7 @@ final public class Physics {
             HashSet<Entity> collidedWith = new HashSet<>();
             for (Entity other : m_entitites.values()) {
                 if (ent == other) continue;
+                if (ent.ignoresCollisionWith(other) || other.ignoresCollisionWith(ent)) continue;
                 RigidBody otherBody = other.getRigidBody();
                 if (body.collisionFlags.contains(otherBody.getCollisionType()) && otherBody.collisionFlags.contains(body.getCollisionType())) {
                     double bodyDist = pos.add(vel).distance(otherBody.getPosition());
@@ -83,7 +85,7 @@ final public class Physics {
                             collidedWith.add(other);
                         }
                         // adjust velocity
-                        if (ent instanceof Bullet || other instanceof Bullet) continue;
+                        if (ent instanceof Bullet) continue;
                         Point2D offsetDir = pos.add(vel).subtract(otherBody.getPosition()).normalize();
                         offsetDir = offsetDir.multiply(minDist - bodyDist);
                         vel = vel.add(offsetDir);

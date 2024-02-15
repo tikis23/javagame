@@ -69,7 +69,7 @@ final public class GameLoop {
                 m_frameTime += currentNanoTime - m_prevNanoTime;
                 if (m_frameTime > 500000000L) {
                     m_frameTime /= m_frames;
-                    System.out.println("frame time: " + (double)m_frameTime / 1000000 + "ms");
+                    //System.out.println("frame time: " + (double)m_frameTime / 1000000 + "ms");
                     m_frameTime = 0;
                     m_frames = 0;
                 }

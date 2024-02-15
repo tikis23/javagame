@@ -1,6 +1,7 @@
 package com.javagame;
 
 import javafx.geometry.Point2D;
+import java.util.HashSet;
 
 public abstract class Entity {
     public Entity(Sprite sprite, int maxHealth, int damage, double height, Point2D position, double maxSpeed, double radius, double velocityDamp) {
@@ -13,6 +14,7 @@ public abstract class Entity {
         m_maxHealth = maxHealth;
         m_health = m_maxHealth;
         m_damage = damage;
+        m_ignoredCollisions = new HashSet<>();
     }
     public RigidBody getRigidBody() {
         return m_body;
@@ -56,10 +58,21 @@ public abstract class Entity {
     public int getDamage() {
         return m_damage;
     }
+    public boolean ignoresCollisionWith(Entity ent) {
+        return m_ignoredCollisions.contains(ent);
+    }
+    public void ignoredCollisionAdd(Entity ent) {
+        m_ignoredCollisions.add(ent);
+    }
+    public void ignoredCollisionRemove(Entity ent) {
+        m_ignoredCollisions.remove(ent);
+    }
  
     public abstract void update(Input input, double dt, World world);
     public abstract void onCollideWall();
     public abstract void onCollideEntity(Entity ent);
+
+    private HashSet<Entity> m_ignoredCollisions;
 
     private int m_maxHealth;
     private int m_health;

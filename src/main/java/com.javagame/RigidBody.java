@@ -17,6 +17,9 @@ final public class RigidBody {
     public int getId() {
         return m_id;
     }
+    public void setMaxSpeed(double speed) {
+        m_maxSpeed = speed;
+    } 
     public Point2D getPosition() {
         return new Point2D(m_position.getX(), m_position.getY());
     }

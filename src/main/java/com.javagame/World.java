@@ -92,11 +92,13 @@ final public class World {
                     int tileIndex = y * m_map.getMapWidth() + x;
                     m_map.getMap()[tileIndex] = -1;
                     m_animTiles.put(tileIndex, 1.0);
+                    // move out of map
                     m_exits[i][0] -= 2000;
                     m_exits[i][1] -= 2000;
                 }
-                exitDist = player.getPos().distance(new Point2D(x + 2000 + 0.5, y + 2000 + 0.5));
-                if (exitDist < 0.5) {
+                int playerX = (int)player.getPos().getX();
+                int playerY = (int)player.getPos().getY();
+                if (x + 2000 == playerX && y + 2000 == playerY) {
                     m_finish = true;
                 }
             }

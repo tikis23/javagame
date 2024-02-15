@@ -14,7 +14,7 @@ final public class Gun {
     }
     public void update(double dt) {
         if (m_shooting) {
-            if (!m_shot && m_anim.getFrame() == m_shootDelay) {
+            if (!m_shot && m_anim.getFrame() == m_anim.getFrom() + m_shootDelay) {
                 m_action.trigger();
                 m_shot = true;
             }

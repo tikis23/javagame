@@ -104,6 +104,23 @@ final public class Pathfinding {
 
         return null;
     }
+    public static Point2D predictImpactPosition(Point2D targetPos, Point2D targetVel, Point2D originPos, double originSpeed) {
+        double a = targetVel.dotProduct(targetVel) - originSpeed * originSpeed;
+        double b = 2 * targetVel.dotProduct(targetPos.subtract(originPos));
+        double c = targetPos.subtract(originPos).dotProduct(targetPos.subtract(originPos));
+        double d = b * b - 4 * a * c;
+
+        if (d >= 0) { // can hit the target
+            double t1 = (-b + Math.sqrt(d)) / (2 * a);
+            double t2 = (-b - Math.sqrt(d)) / (2 * a);
+            double t = Math.min(t1, t2);
+            if (t < 0) t = Math.max(t1, t2);
+            if (t >= 0) {
+                targetPos = targetPos.add(targetVel.multiply(t));
+            }
+        }
+        return targetPos;
+    }
     public static double castRay(World world, Point2D pos, Point2D dir) {
         boolean hit = false;
         // setup dda
@@ -140,7 +157,7 @@ final public class Pathfinding {
 
         if (hit) {
             double hitDist = hitDir == 1 ? sideDist.getX() - deltaDist.getX() : sideDist.getY() - deltaDist.getY();
-            hitDist = sideDist.magnitude();
+            //hitDist = sideDist.magnitude();
             if (hitDist <= 0) hitDist = 0.001;
             return hitDist;
         }

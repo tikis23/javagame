@@ -40,8 +40,14 @@ final public class Animation {
         m_currentTime = 0;
         m_finished = false;
     }
+    public int getFrom() {
+        return m_from;
+    }
+    public int getTo() {
+        return m_to;
+    }
 
-    private boolean m_finished;
+private boolean m_finished;
     private int m_freezeFor;
     private int m_from;
     private int m_to;

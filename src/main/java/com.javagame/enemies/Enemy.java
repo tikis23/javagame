@@ -11,6 +11,36 @@ public abstract class Enemy extends Entity {
                     Physics.CollideMask.WALL, Physics.CollideMask.BULLET);
         m_takingDamage = false;
         m_dying = false;
+        m_aggroFrom = 0;
+        m_loseAggroFrom = 0;
+        m_isAggro = false;
+        m_aggroTimer = Math.random() * 2000 + 2000; // just to spread updateAggro calls a little across frames
+    }
+    public void setAggroRange(double aggroFrom, double loseAggroFrom) {
+        m_aggroFrom = aggroFrom;
+        m_loseAggroFrom = loseAggroFrom;
+    }
+    public void updateAggro(World world, double dt) {
+        m_aggroTimer += dt;
+        if (m_isAggro) {
+            if (m_aggroTimer < 5000) return;
+        } else {
+            if (m_aggroTimer < 500) return;
+        }
+        m_aggroTimer = 0;
+        
+        Point2D pos = getRigidBody().getPosition();
+        double dist = pos.distance(world.player.getPos());
+        if (dist >= m_loseAggroFrom) {
+            m_isAggro = false;
+        } else if (dist <= m_aggroFrom) {
+            double hitDist = Pathfinding.castRay(world, pos, world.player.getPos().subtract(pos).normalize());
+            if (dist < hitDist) m_isAggro = true;
+        }
+            
+    }
+    public boolean isAggro() {
+        return m_isAggro;
     }
     public boolean isTakingDamage() {
         return m_takingDamage;
@@ -33,6 +63,10 @@ public abstract class Enemy extends Entity {
         m_takingDamage = true;
     }
 
+    private double m_aggroTimer;
+    private double m_aggroFrom;
+    private double m_loseAggroFrom;
+    private boolean m_isAggro;
     private boolean m_takingDamage;
     private boolean m_dying;
 }
