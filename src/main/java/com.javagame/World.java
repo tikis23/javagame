@@ -58,7 +58,7 @@ final public class World {
 
         // delete sheduled entities
         for (int i = 0; i < m_entities.size(); i++) {
-            if (m_entities.get(i).isSheduledForDestroy()) {
+            if (m_entities.get(i).isSheduledForDestroy(dt)) {
                 removeEntity(i);
                 i--;
             }

@@ -9,6 +9,7 @@ public abstract class Entity {
         m_sprite = sprite;
         m_height = height;
         m_destroy = false;
+        m_destroyInTime = -1;
         m_vOffset = 0;
         m_animTileId = 0;
         m_maxHealth = maxHealth;
@@ -28,8 +29,16 @@ public abstract class Entity {
     public void sheduleDestroy() {
         m_destroy = true;
     }
-    public boolean isSheduledForDestroy() {
-        return m_destroy;
+    public void sheduleDestroy(double time) {
+        m_destroy = true;
+        m_destroyInTime = time;
+    }
+    public boolean isSheduledForDestroy(double dt) {
+        if (m_destroy) {
+            m_destroyInTime -= dt;
+            if (m_destroyInTime <= 0) return true;
+        }
+        return false;
     }
     public double getVOffset() {
         return m_vOffset;
@@ -81,6 +90,7 @@ public abstract class Entity {
     private int m_animTileId;
     private double m_vOffset;
     private boolean m_destroy;
+    private double m_destroyInTime;
     private double m_height;
     private Sprite m_sprite;
     private RigidBody m_body;

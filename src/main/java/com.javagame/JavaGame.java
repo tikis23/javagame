@@ -13,7 +13,7 @@ final public class JavaGame extends Application {
         
         gameLoop.start();
     }
-    public static void main(String[] args) {
+    public static void runGame() {
         launch();
     }
 }

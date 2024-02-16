@@ -4,6 +4,7 @@
   <groupId>com.javagame</groupId>
   <artifactId>javagame</artifactId>
   <version>1.0</version>
+  <packaging>jar</packaging>
 
   <properties>
     <javafx.version>21</javafx.version>
@@ -30,10 +31,29 @@
         <artifactId>javafx-maven-plugin</artifactId>
         <version>${javafx.maven.plugin.version}</version>
         <configuration>
-          <mainClass>com.javagame.JavaGame</mainClass>
+          <mainClass>com.javagame.Main</mainClass>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+            <execution>
+                <phase>package</phase>
+                <goals>
+                    <goal>shade</goal>
+                </goals>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>com.javagame.Main</mainClass>
+                        </transformer>
+                    </transformers>
+                </configuration>
+            </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
-  
 </project>

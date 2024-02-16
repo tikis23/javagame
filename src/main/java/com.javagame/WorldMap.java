@@ -13,6 +13,7 @@ public class WorldMap {
         enemyNames.put("Blob", Blob.class);
         enemyNames.put("Hobo", Hobo.class);
         enemyNames.put("Gunblin", Gunblin.class);
+        enemyNames.put("Demon", Demon.class);
     }
  
     public WorldMap(String mapName) {
