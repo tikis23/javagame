@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import javafx.geometry.Point2D;
 
+import com.javagame.enemies.*;
+
 public class WorldMap {
     public static final HashMap<String, Class<?>> enemyNames = new HashMap<>();
     static {

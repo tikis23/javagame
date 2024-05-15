@@ -1,7 +1,13 @@
-package com.javagame;
+package com.javagame.enemies;
 
 import javafx.geometry.Point2D;
 import java.util.EnumSet;
+
+import com.javagame.Entity;
+import com.javagame.Physics;
+import com.javagame.Sprite;
+import com.javagame.World;
+import com.javagame.Pathfinding;
 
 public abstract class Enemy extends Entity {
     public Enemy(Sprite sprite, int maxHealth, int damage, double height, Point2D position, double maxSpeed, double radius, double velocityDamp) {

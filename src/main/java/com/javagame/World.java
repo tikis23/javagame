@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.lang.reflect.InvocationTargetException;
 
+import com.javagame.enemies.Enemy;
+
 final public class World {
     public World(String name, Player oldPlayer) {
         m_complete = false;

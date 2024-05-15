@@ -18,7 +18,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.control.TextFormatter;
 import javafx.util.converter.IntegerStringConverter;
 import java.util.function.UnaryOperator;
-import java.nio.file.Paths;
 import javafx.geometry.Point2D;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelWriter;
@@ -527,7 +526,6 @@ final public class Editor {
     private boolean m_setPlayer;
     private int m_selectedImage;
     private WorldMap m_map;
-    private Input m_input;
     private double m_cameraX;
     private double m_cameraY;
     private int m_width;

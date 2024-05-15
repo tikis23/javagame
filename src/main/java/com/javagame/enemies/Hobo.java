@@ -1,22 +1,29 @@
-package com.javagame;
+package com.javagame.enemies;
 
 import javafx.geometry.Point2D;
 import java.util.EnumSet;
 
-final public class Blob extends Enemy {
-    public Blob(Point2D position) {
-        super(Sprite.get("blob.png", 64, false), 2500, 200, 1.0, position, 0.5, 0.5, 0.5);
-        setAggroRange(30, 80);
+import com.javagame.Animation;
+import com.javagame.Sprite;
+import com.javagame.World;
+import com.javagame.Physics;
+import com.javagame.Pathfinding;
+import com.javagame.Input;
+import com.javagame.RigidBody;
+
+final public class Hobo extends Enemy {
+    public Hobo(Point2D position) {
+        super(Sprite.get("hobo.png", 64, false), 1300, 100, 0.6, position, 0.5, 0.3, 0.5);
+        setAggroRange(40, 80);
         m_walking = false;
         m_attacking = false;
-        m_speed = 0.0005;
-        m_attackRange = 1.0;
+        m_speed = 0.0015;
+        m_attackRange = 0.6;
         m_path = new Pathfinding(400);
-        m_attacked = false;
 
-        m_animIdle = new Animation(0, 1, 1, 2, true, 1);
+        m_animIdle = new Animation(3, 5, 2, 2, true, 1);
         m_animWalking = new Animation(0, 3, 1, 8, true, 1);
-        m_animAttacking = new Animation(5, 6, 1, 4, false, 5);
+        m_animAttacking = new Animation(5, 6, 1, 4, false, 1);
         m_animTakeDamage = new Animation(10, 10, 1, 5, false, 1);
         m_animDying = new Animation(10, 14, 1, 5, false, 20);
     }
@@ -40,12 +47,6 @@ final public class Blob extends Enemy {
             m_animDying.step(dt);
             setAnimTileId(m_animDying.getFrame());
             if (m_animDying.isFinished()) {
-                PoisonCloud poison = new PoisonCloud(body.getPosition(), new Point2D(0, 0), 0, 3);
-                world.addEntity(poison, true);
-                poison.sheduleDestroy(8000);
-                poison.setPierce(-1);
-                poison.getRigidBody().setCollisionType(Physics.CollideMask.ENEMY_BULLET);
-                poison.getRigidBody().collisionFlags = EnumSet.of(Physics.CollideMask.WALL, Physics.CollideMask.PLAYER);
                 sheduleDestroy();
             }
         } else {
@@ -80,15 +81,11 @@ final public class Blob extends Enemy {
             }
 
             if (m_attacking) {
-                if (!m_attacked) {
-                    world.player.takeDamage(getDamage());
-                    m_attacked = true;
-                }
                 m_animAttacking.step(dt);
                 setAnimTileId(m_animAttacking.getFrame());
                 if (m_animAttacking.isFinished()) {
+                    world.player.takeDamage(getDamage());
                     m_attacking = false;
-                    m_attacked = false;
                     m_animAttacking.reset();
                 }
             } else if (m_walking) {
@@ -101,7 +98,6 @@ final public class Blob extends Enemy {
         }
     }
 
-    private boolean m_attacked;
     private Pathfinding m_path;
     private double m_attackRange;
     private double m_speed;

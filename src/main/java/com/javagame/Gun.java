@@ -1,7 +1,7 @@
 package com.javagame;
 
 final public class Gun {
-    interface ShootAction {
+    public interface ShootAction {
         void trigger();
     }
     public Gun(Sprite sprite, int shootFrameDelay, Animation anim, ShootAction action) {

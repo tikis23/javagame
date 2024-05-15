@@ -3,6 +3,8 @@ package com.javagame;
 import javafx.geometry.Point2D;
 import java.util.EnumSet;
 
+import com.javagame.bullets.*;
+
 final public class Player extends Entity {
     public Player(double x, double y, World world) {
         super(null, 1000, 0, 0, new Point2D(x, y), 0.05, 0.2, 0.2);

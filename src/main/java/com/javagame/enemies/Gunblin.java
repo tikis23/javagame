@@ -1,7 +1,18 @@
-package com.javagame;
+package com.javagame.enemies;
 
 import javafx.geometry.Point2D;
 import java.util.EnumSet;
+
+import com.javagame.Animation;
+import com.javagame.Sprite;
+import com.javagame.World;
+import com.javagame.Input;
+import com.javagame.Pathfinding;
+import com.javagame.bullets.PistolBullet;
+import com.javagame.bullets.Bullet;
+import com.javagame.Gun;
+import com.javagame.Physics;
+import com.javagame.RigidBody;
 
 final public class Gunblin extends Enemy {
     public Gunblin(Point2D position) {

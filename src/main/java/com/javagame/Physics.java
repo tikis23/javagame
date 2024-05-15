@@ -3,6 +3,7 @@ package com.javagame;
 import java.util.HashMap;
 import java.util.HashSet;
 import javafx.geometry.Point2D;
+import com.javagame.bullets.Bullet;
 
 final public class Physics {
     public enum CollideMask {

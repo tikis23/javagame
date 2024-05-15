@@ -1,6 +1,8 @@
-package com.javagame;
+package com.javagame.bullets;
 
 import javafx.geometry.Point2D;
+import com.javagame.Animation;
+import com.javagame.Sprite;
 
 final public class FireballBullet extends Bullet {
     public FireballBullet(Point2D position, Point2D dir, double speed, int damage) {

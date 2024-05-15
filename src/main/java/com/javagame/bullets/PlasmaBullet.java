@@ -1,6 +1,9 @@
-package com.javagame;
+package com.javagame.bullets;
 
 import javafx.geometry.Point2D;
+
+import com.javagame.Animation;
+import com.javagame.Sprite;
 
 final public class PlasmaBullet extends Bullet {
     public PlasmaBullet(Point2D position, Point2D dir, double speed, int damage) {

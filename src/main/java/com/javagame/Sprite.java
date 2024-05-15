@@ -19,7 +19,6 @@ final public class Sprite {
     }
     private static Sprite loadSprite(String name, int tileSize, boolean createImages) {
         Image img = new Image("file:" + Paths.get("sprites/" + name).toString());
-        if (img == null) return null;
         int imgWidth = (int)img.getWidth();
         int imgHeight = (int)img.getHeight();
         int width = imgWidth / tileSize;

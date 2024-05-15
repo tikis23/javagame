@@ -1,7 +1,13 @@
-package com.javagame;
+package com.javagame.bullets;
 
 import javafx.geometry.Point2D;
 import java.util.EnumSet;
+import com.javagame.Entity;
+import com.javagame.Physics;
+import com.javagame.Animation;
+import com.javagame.Sprite;
+import com.javagame.World;
+import com.javagame.Input;
 
 public abstract class Bullet extends Entity {
     public Bullet(Sprite sprite, int damage, Point2D position, double maxSpeed, double radius, Animation animFly, Animation animDie) {
