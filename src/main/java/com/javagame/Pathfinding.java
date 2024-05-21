@@ -15,13 +15,16 @@ final public class Pathfinding {
         m_elapsed += dt;
         if (m_elapsed > 1000) {
             m_elapsed = 0;
-            m_path = calculatePath(world, source, target, m_terminateDist);
+            m_path = calculatePath(world, source, target, m_terminateDist, m_ignoreBlockedTarget);
         }
     }
     public Point2D[] getPath() {
         return m_path;
     }
-    public static Point2D[] calculatePath(World world, Point2D source, Point2D target, int terminateDist) {
+    public void ignoreIfTargetIsBlocked(boolean ignore) {
+        m_ignoreBlockedTarget = ignore;
+    }
+    public static Point2D[] calculatePath(World world, Point2D source, Point2D target, int terminateDist, boolean ignoreBlockedTarget) {
         int[] map = world.getMap();
         int mapWidth = world.getMapWidth();
         int mapHeight = world.getMapHeight();
@@ -33,7 +36,7 @@ final public class Pathfinding {
 
         // check if in bounds
         if (sourceX < 0 || sourceX >= mapWidth || sourceY < 0 || sourceY >= mapHeight ||
-    		targetX < 0 || targetX >= mapWidth || targetX < 0 || targetX >= mapHeight) return null;
+        targetX < 0 || targetX >= mapWidth || targetX < 0 || targetX >= mapHeight) return null;
 
         boolean[] closed = new boolean[map.length];
         PriorityQueue<PathNode> open = new PriorityQueue<>((a, b) -> (a.g + a.h) - (b.g + b.h));
@@ -61,7 +64,10 @@ final public class Pathfinding {
                 PathNode node = parent.clone();
                 node.x += x;
                 int index = node.y * mapWidth + node.x;
-                if (node.x < 0 || node.x >= mapWidth || closed[index] || map[index] != 0) continue;
+                if (node.x < 0 || node.x >= mapWidth || closed[index]) continue;
+                if (ignoreBlockedTarget) {
+                    if ((node.x != targetX || node.y != targetY) && map[index] != 0) continue;
+                } else if (map[index] != 0) continue;
                 node.prev = parent;
                 node.g += costNormal;
                 node.h = costNormal * heuristic(node.x, targetX, node.y, targetY);
@@ -74,7 +80,10 @@ final public class Pathfinding {
                 PathNode node = parent.clone();
                 node.y += y;
                 int index = node.y * mapWidth + node.x;
-                if (node.y < 0 || node.y >= mapHeight || closed[index] || map[index] != 0) continue;
+                if (node.y < 0 || node.y >= mapHeight || closed[index]) continue;
+                if (ignoreBlockedTarget) {
+                    if ((node.x != targetX || node.y != targetY) && map[index] != 0) continue;
+                } else if (map[index] != 0) continue;
                 node.prev = parent;
                 node.g += costNormal;
                 node.h = costNormal * heuristic(node.x, targetX, node.y, targetY);
@@ -89,8 +98,10 @@ final public class Pathfinding {
                     node.x += x;
                     node.y += y;
                     int index = node.y * mapWidth + node.x;
-                    if (node.x < 0 || node.x >= mapWidth || node.y < 0 || node.y >= mapHeight ||
-                        closed[index] || map[index] != 0) continue;
+                    if (node.x < 0 || node.x >= mapWidth || node.y < 0 || node.y >= mapHeight || closed[index]) continue;
+                    if (ignoreBlockedTarget) {
+                        if ((node.x != targetX || node.y != targetY) && map[index] != 0) continue;
+                    } else if (map[index] != 0) continue;
                     if (map[index - x] != 0 && map[index - y * mapWidth] != 0) continue; // skip if blocked
                     node.prev = parent;
                     node.g += costNormal;
@@ -188,4 +199,5 @@ final public class Pathfinding {
     private int m_terminateDist;
     private Point2D[] m_path;
     private double m_elapsed;
+    private boolean m_ignoreBlockedTarget = false;
 }

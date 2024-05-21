@@ -50,6 +50,7 @@ public class WorldMap {
         return m_mapHeight;
     }
     public void loadFromFile(String fileName) {
+        m_mapName = fileName;
         m_map = null;
         m_enemies = new EnemyData[0];
         m_targetMap = "";
@@ -191,6 +192,9 @@ public class WorldMap {
     public void setEnemies(EnemyData[] enemies) {
         m_enemies = enemies;
     }
+    public String getMapName() {
+        return m_mapName;
+    }
 
     public static final class EnemyData {
         public EnemyData(String name, Point2D pos) {
@@ -201,6 +205,7 @@ public class WorldMap {
         Point2D pos;
     }
 
+    private String m_mapName;
     private EnemyData[] m_enemies;
     private String m_targetMap;
     private static String m_filePath = "maps/";

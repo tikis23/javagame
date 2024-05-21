@@ -118,6 +118,38 @@ final public class World {
             }
         }
     }
+    public int getClosestEnemy(Point2D pos, boolean mustBeAlive) {
+        int closest = -1;
+        double dist = Double.MAX_VALUE;
+        for (int i = 0; i < m_entities.size(); i++) {
+            Entity ent = m_entities.get(i);
+            if (ent.getRigidBody().getCollisionType() == Physics.CollideMask.ENEMY) {
+                if (mustBeAlive && ((Enemy)ent).isDying()) continue;
+                double newDist = ent.getRigidBody().getPosition().distance(pos);
+                if (newDist < dist) {
+                    dist = newDist;
+                    closest = i;
+                }
+            }
+        }
+        return closest;
+    }
+    public int getEnemyCount() {
+        int count = 0;
+        for (Entity ent : m_entities) {
+            if (ent.getRigidBody().getCollisionType() == Physics.CollideMask.ENEMY) {
+                count++;
+            }
+        }
+        return count;
+    }
+    public Point2D[] getExits() {
+        Point2D[] exits = new Point2D[m_exits.length];
+        for (int i = 0; i < m_exits.length; i++) {
+            exits[i] = new Point2D(m_exits[i][0], m_exits[i][1]);
+        }
+        return exits;
+    }
     public Double getAnimTileHeight(int tileIndex) {
         return m_animTiles.get(tileIndex);
     }
@@ -144,6 +176,9 @@ final public class World {
     public void removeEntity(int index) {
         m_physics.removeEntity(m_entities.get(index));
         m_entities.remove(index);
+    }
+    public String getMapName() {
+        return m_map.getMapName();
     }
 
     public Player player;

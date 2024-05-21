@@ -1,0 +1,53 @@
+int32 gunId = 0;
+int32 framesStuck = 0;
+
+bool shootAtEnemy(int32 enemyId) {
+    bool tryingToWalk = false;
+    if (playerCanShootEnemy(enemyId)) {
+        playerSetWeapon(gunId);
+        playerAttack();
+
+        int64 rand = random(0, 100);
+        if (rand < 50) playerMoveLeft(50);
+        else playerMoveRight(50);
+
+        gunId = (gunId + 1) % playerGetWeaponCount();       
+    } else if (playerCanSeeEnemy(enemyId)) {
+        playerTurnToEnemy(enemyId);
+    } else {
+        playerStepToEnemy(enemyId);
+        tryingToWalk = true;
+    }
+    return tryingToWalk;
+}
+
+while (true) {
+    bool tryingToWalk = false;
+    if (worldGetEnemyCount() > 0) {
+        int32 enemyId = worldGetClosestEnemyId();
+        tryingToWalk = shootAtEnemy(enemyId);
+    } else {
+        playerStepToExit();
+        tryingToWalk = true;
+        if (playerIsExitReached()) break;
+    }
+
+    if (playerIsWalking()) {
+        playerTurnToVelocityDir();
+    } else if (tryingToWalk) {
+        framesStuck = framesStuck + 1;
+    }
+
+    if (framesStuck > 80) {
+        int64 rand = random(0, 100);
+        for (int32 i = 0; i < 20; i = i + 1) {
+            if (rand < 50) playerMoveLeft(80);
+            else playerMoveRight(80);
+            wait();
+        }
+
+        framesStuck = 0;
+    }
+
+    wait();
+}
