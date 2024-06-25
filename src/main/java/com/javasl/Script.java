@@ -63,6 +63,12 @@ public class Script {
     public void execute(int cycles) {
         m_interpreter.execute(cycles);
     }
+    public ArrayList<Statement> getStatements() {
+        return m_interpreter.getStatements();
+    }
+    public String dumpState() {
+        return m_interpreter.dumpState();
+    }
 
     private boolean m_ready = false;
     private Tokenizer m_tokenizer = new Tokenizer();

@@ -11,10 +11,10 @@ public interface Statement {
     public static Statement declareVariable(Variable variable) {
         return new Statement() {
             public void execute(Interpreter.State state) {
-                state.variables.push(variable);
+                state.variables.push(variable.copy());
             }
             public String toString() {
-                return "declareVariable " + variable.toString();
+                return "declareVariable " + variable.copy().toString();
             }
         };
     }

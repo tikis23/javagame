@@ -81,10 +81,10 @@ public class Parser {
     private AST parseStatement() {
         int backup = backup();
         // comment
-        Token comment = peek(0);
+        Token comment = next();
         while (comment != null && comment.type == Token.Type.COMMENT) {
-            comment = next();
             backup = backup();
+            comment = next();
         }
 
         // block

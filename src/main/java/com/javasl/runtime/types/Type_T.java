@@ -33,7 +33,7 @@ public abstract class Type_T {
     // misc
     public Type_T copy() {
         Type_T val = getTypeInstance();
-        val.setValue(getValue());
+        if (!(val instanceof Void_T)) val.setValue(getValue());
         return val;
     }
     public abstract String toString();

@@ -326,7 +326,7 @@ public class Compiler {
         if (conditionPopCount > 0) {
             m_functionIp++;
         }
-        m_functionIp+=2;
+        m_functionIp += 2; // jumpRelConditional + jumpRel
 
         // compile body
         ArrayList<Statement> body;
@@ -361,7 +361,6 @@ public class Compiler {
         if (conditionPopCount > 0) {
             condition.add(Statement.clearStack(conditionPopCount));
             // IP increment is after compiling the condition
-            m_functionIp++;
         }
         condition.add(Statement.jumpRel(body.size() + 1));
         // IP increment is after compiling the condition
@@ -383,13 +382,13 @@ public class Compiler {
         // backpatch breaks
         for (Backpatch backpatch : loopBackpatch.backpatches) {
             if (backpatch.node instanceof BreakNode) {
-                backpatch.targetIp = m_functionIp - 2;
+                backpatch.targetIp = m_functionIp - 1;
             }
         }
         // backpatch continues
         for (Backpatch backpatch : loopBackpatch.backpatches) {
             if (backpatch.node instanceof ContinueNode) {
-                backpatch.targetIp = m_functionIp - 3;
+                backpatch.targetIp = m_functionIp - 2;
             }
         }
 
@@ -398,7 +397,6 @@ public class Compiler {
             m_backpatches.add(backpatch);
         }
         m_loopBackpatches.pop();
-
         return ret;
     }
     private ArrayList<Statement> compileConditionalNode(ConditionalNode ast) {
@@ -463,6 +461,7 @@ public class Compiler {
                 }
             }
         }
+        m_functionIp++; // true body skip false body (removed later if no false body is present)
 
         // compile false body
         ArrayList<Statement> falseBody = null;
@@ -498,10 +497,12 @@ public class Compiler {
             removeVariableFromScope(var);
         }
 
-        // create jump instructions
+        // if false body exists skip it at the end of true body
         if (falseBody != null) {
             trueBody.add(Statement.jumpRel(falseBody.size()));
-            m_functionIp++;
+            // IP increment is after compiling true body
+        } else {
+            m_functionIp--; // decrement because no false body present
         }
         ret.add(Statement.jumpRelConditional(false, trueBody.size(), conditionRel, conditionIndex));
         // IP increment is after compiling the condition
@@ -670,6 +671,9 @@ public class Compiler {
         if (m_inFunction) {
             throw new IllegalArgumentException("Cannot define function inside another function.");
         }
+        if (m_scopeStack.size() > 1) {
+            throw new IllegalArgumentException("Functions can only be defined in global scope.");
+        }
 
         // compile function params
         ArrayList<Variable> params = compileParamDeclarationNode(ast.paramDeclaration);
@@ -682,6 +686,13 @@ public class Compiler {
         addVariableToScope(funcVar);
         m_inFunction = true;
 
+        // add function variable
+        ret.add(Statement.declareVariable(funcVar));
+        m_functionIp++;
+        ret.add(Statement.jumpRel(0));
+        m_functionIp++;
+        int jumpBackpatch = ret.size() - 1;
+
         // add params to scope
         for (Variable param : params) {
             addVariableToScope(param);
@@ -690,17 +701,17 @@ public class Compiler {
         // compile function block
         ArrayList<Statement> block = compileBlockNode(ast.block);
         block.remove(block.size() - 1); // remove stack clear instruction because return clears stack
+        m_functionIp--; // decrement because we removed stack clear
+        ret.addAll(block);
 
         // remove params from scope
         for (Variable param : params) {
             removeVariableFromScope(param);
         }
 
-        ret.add(Statement.declareVariable(funcVar));
-        m_functionIp++;
-        ret.add(Statement.jumpRel(block.size()));
-        m_functionIp++;
-        ret.addAll(block);
+        // backpatch jump
+        ret.set(jumpBackpatch, Statement.jumpRel(block.size()));
+        
         m_inFunction = false;
         return ret;
     }
