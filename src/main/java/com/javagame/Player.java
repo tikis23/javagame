@@ -224,7 +224,7 @@ final public class Player extends Entity {
             Point2D[] path = pathFinder.getPath();
             if (path == null) return new Void_T();
 
-            double speed = m_speed * 4 * m_deltaTime;
+            double speed = m_speed * moveSpeed * m_deltaTime;
             int startIndex = 0;
             for (int i = 0; i < path.length; i++) {
                 if (getPos().distance(path[i]) < 0.5) {
@@ -252,6 +252,7 @@ final public class Player extends Entity {
         });
         script.addExternalFunction("playerCanShootEnemy", false, new Bool_T(), new Type_T[]{new Int32_T()}, (p) -> {
             int enemyId = Script.intParam(p[0]);
+            if (enemyId == -1) return new Bool_T(false);
             Point2D enemyPos = m_world.getEntities().get(enemyId).getRigidBody().getPosition();
             double dist = getPos().distance(enemyPos);
             Point2D enemyDir = enemyPos.subtract(getPos()).normalize();
@@ -265,6 +266,7 @@ final public class Player extends Entity {
         });
         script.addExternalFunction("playerCanSeeEnemy", false, new Bool_T(), new Type_T[]{new Int32_T()}, (p) -> {
             int enemyId = Script.intParam(p[0]);
+            if (enemyId == -1) return new Bool_T(false);
             Point2D enemyPos = m_world.getEntities().get(enemyId).getRigidBody().getPosition();
             double dist = getPos().distance(enemyPos);
             Point2D enemyDir = enemyPos.subtract(getPos()).normalize();
@@ -274,6 +276,7 @@ final public class Player extends Entity {
         });
         script.addExternalFunction("playerTurnToEnemy", false, new Void_T(), new Type_T[]{new Int32_T()}, (p) -> {
             int enemyId = Script.intParam(p[0]);
+            if (enemyId == -1) return new Void_T();
             Point2D enemyPos = m_world.getEntities().get(enemyId).getRigidBody().getPosition();
             Point2D enemyDir = enemyPos.subtract(getPos()).normalize();
             m_dir = enemyDir;
@@ -281,6 +284,7 @@ final public class Player extends Entity {
         });
         script.addExternalFunction("playerStepToEnemy", false, new Void_T(), new Type_T[]{new Int32_T()}, (p) -> {
             int enemyId = Script.intParam(p[0]);
+            if (enemyId == -1) return new Void_T();
             Point2D enemyPos = m_world.getEntities().get(enemyId).getRigidBody().getPosition();
 
             pathFinder.update(m_world, getPos(), enemyPos, m_deltaTime * 500);
@@ -339,6 +343,17 @@ final public class Player extends Entity {
             long min = Script.longParam(p[0]);
             long max = Script.longParam(p[1]);
             return new Int64_T((long)(Math.random() * (max - min) + min));
+        });
+        script.addExternalFunction("cheatHealPlayer", false, new Void_T(), new Type_T[]{}, (p) -> {
+            setHealth(10000000);
+            return new Void_T();
+        });
+        script.addExternalFunction("cheatKillEnemy", false, new Void_T(), new Type_T[]{new Int32_T()}, (p) -> {
+            int enemyId = Script.intParam(p[0]);
+            if (enemyId == -1) return new Void_T();
+            Entity enemy = m_world.getEntities().get(enemyId);
+            enemy.setHealth(-1000);
+            return new Void_T();
         });
     }
 
